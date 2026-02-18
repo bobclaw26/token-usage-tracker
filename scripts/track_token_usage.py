@@ -36,24 +36,38 @@ def parse_session_logs():
                         entry = json.loads(line)
                         
                         # Check for model and token information
-                        if 'model' in entry and 'usage' in entry:
-                            model = entry['model']
-                            input_tokens = entry['usage'].get('input_tokens', 0)
-                            output_tokens = entry['usage'].get('output_tokens', 0)
+                        model = entry.get('model')
+                        usage = entry.get('usage')
+                        
+                        # Some logs nest these under message
+                        if 'message' in entry:
+                            model = model or entry['message'].get('model')
+                            usage = usage or entry['message'].get('usage')
+                        
+                        if model and usage:
+                            input_tokens = usage.get('input', usage.get('input_tokens', 0))
+                            output_tokens = usage.get('output', usage.get('output_tokens', 0))
+                            cache_read = usage.get('cacheRead', 0)
+                            cache_write = usage.get('cacheWrite', 0)
                             
-                            # Initialize model entry if not exists
+                            # Normalize keys
+                            input_tokens = input_tokens or 0
+                            output_tokens = output_tokens or 0
+                            
                             if model not in token_usage:
                                 token_usage[model] = {
                                     'input_tokens': 0,
                                     'output_tokens': 0,
+                                    'cache_read': 0,
+                                    'cache_write': 0,
                                     'total_cost': 0.0
                                 }
                             
-                            # Accumulate tokens
                             token_usage[model]['input_tokens'] += input_tokens
                             token_usage[model]['output_tokens'] += output_tokens
+                            token_usage[model]['cache_read'] += cache_read
+                            token_usage[model]['cache_write'] += cache_write
                             
-                            # Calculate cost if pricing is available
                             if model in model_prices:
                                 input_cost = (input_tokens / 1000) * model_prices[model]['input_price_per_1k_tokens']
                                 output_cost = (output_tokens / 1000) * model_prices[model]['output_price_per_1k_tokens']
@@ -75,6 +89,8 @@ def generate_report(token_usage):
         report += f"Model: {model}\n"
         report += f"Input Tokens: {usage['input_tokens']:,}\n"
         report += f"Output Tokens: {usage['output_tokens']:,}\n"
+        report += f"Cache Reads: {usage['cache_read']:,} tokens\n"
+        report += f"Cache Writes: {usage['cache_write']:,} tokens\n"
         report += f"Total Tokens: {usage['input_tokens'] + usage['output_tokens']:,}\n"
         report += f"Estimated Cost: ${usage['total_cost']:.2f}\n\n"
     

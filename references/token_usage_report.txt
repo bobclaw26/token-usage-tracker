@@ -1,3 +1,19 @@
 🤖 OpenClaw Token Usage Report
-Generated: 2026-02-18 20:12:18
+Generated: 2026-02-18 21:25:16
+
+Model: gpt-5.1-codex
+Input Tokens: 1,215,141
+Output Tokens: 18,117
+Cache Reads: 2,094,592 tokens
+Cache Writes: 0 tokens
+Total Tokens: 1,233,258
+Estimated Cost: $0.00
+
+Model: claude-3-5-haiku-20241022
+Input Tokens: 244
+Output Tokens: 14,960
+Cache Reads: 1,956,913 tokens
+Cache Writes: 2,638,857 tokens
+Total Tokens: 15,204
+Estimated Cost: $0.00
 
