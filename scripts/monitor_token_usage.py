@@ -261,6 +261,7 @@ def check_alerts(token_usage, prices, config):
     thresholds = config.get('thresholds', {})
     
     alerts = []
+    interactive_alert = None  # Will hold alert that needs user interaction
     
     # Check for $5 increment alerts
     alert_every_dollars = thresholds.get('alert_every_dollars', 5.0)
@@ -277,10 +278,17 @@ def check_alerts(token_usage, prices, config):
             alerts.append(f"💰 Milestone: ${threshold_crossed:.2f} spent (${total_cost:.2f} total today)")
             save_cost_history(total_cost)
     
-    # Daily limit check
-    daily_limit = thresholds.get('daily_cost_limit', 5.0)
+    # Daily limit check - CRITICAL threshold asks for user input
+    daily_limit = thresholds.get('daily_cost_limit', 10.0)
     if total_cost >= daily_limit * 0.95:
-        alerts.append(f"⛔ CRITICAL: Daily cost limit at {(total_cost/daily_limit)*100:.1f}% (${total_cost:.2f} / ${daily_limit:.2f})")
+        interactive_alert = {
+            'type': 'critical_daily',
+            'period': 'daily',
+            'current_cost': total_cost,
+            'current_limit': daily_limit,
+            'percentage': (total_cost / daily_limit) * 100
+        }
+        alerts.append(f"⛔ CRITICAL: Daily cost at {(total_cost/daily_limit)*100:.1f}% (${total_cost:.2f} / ${daily_limit:.2f})")
     elif total_cost >= daily_limit * 0.75:
         alerts.append(f"⚠ WARNING: Daily cost at {(total_cost/daily_limit)*100:.1f}% of limit (${total_cost:.2f} / ${daily_limit:.2f})")
     
@@ -294,7 +302,7 @@ def check_alerts(token_usage, prices, config):
         if tokens > daily_tokens:
             alerts.append(f"⛔ {model}: {tokens:,} tokens exceed limit of {daily_tokens:,}")
     
-    return alerts
+    return alerts, interactive_alert
 
 def main():
     config = load_config()
@@ -321,7 +329,33 @@ def main():
     log_history(token_usage, prices, datetime.datetime.now().isoformat())
     
     # Check for alerts
-    alerts = check_alerts(token_usage, prices, config)
+    alerts, interactive_alert = check_alerts(token_usage, prices, config)
+    
+    # Handle interactive alert (critical threshold hit)
+    if interactive_alert:
+        alert_msg = f"""⛔ **Daily Cost Alert**
+
+Current spending: **${interactive_alert['current_cost']:.2f}** / **${interactive_alert['current_limit']:.2f}** ({interactive_alert['percentage']:.1f}%)
+
+Would you like to raise the daily limit?
+
+**Reply with:**
+• A number: `15` (set to $15/day)
+• An increase: `+5` (add $5/day)
+• `keep` (keep current)
+• `disable` (turn off critical alerts)
+
+You've hit {interactive_alert['percentage']:.0f}% of your daily limit. Let me know!"""
+        
+        send_alert(config, alert_msg)
+        
+        # Mark that alert was sent so we know to listen for responses
+        try:
+            from detect_limit_response import mark_alert_sent
+            mark_alert_sent()
+        except ImportError:
+            pass
+    
     if alerts:
         print("⚠ ALERTS:\n")
         for alert in alerts:
