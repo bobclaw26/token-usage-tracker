@@ -1,13 +1,13 @@
 🤖 OpenClaw Token Usage Report
-Generated: 2026-02-18 21:28:31
+Generated: 2026-02-18 21:32:53
 
 Model: openai/gpt-5.1-codex (aliases: gpt-5.1-codex )
-Input Tokens: 1,287,329
-Output Tokens: 20,657
-Cache Reads: 2,637,824 tokens
+Input Tokens: 1,432,293
+Output Tokens: 22,513
+Cache Reads: 2,966,656 tokens
 Cache Writes: 0 tokens
-Total Tokens: 1,307,986
-Estimated Cost: $39.86
+Total Tokens: 1,454,806
+Estimated Cost: $0.90
 
 Model: anthropic/claude-3-5-haiku-20241022 (aliases: claude-3-5-haiku-20241022 )
 Input Tokens: 247
@@ -15,5 +15,5 @@ Output Tokens: 15,043
 Cache Reads: 1,956,913 tokens
 Cache Writes: 2,732,884 tokens
 Total Tokens: 15,290
-Estimated Cost: $18.87
+Estimated Cost: $0.01
 
