@@ -4,6 +4,14 @@ import json
 import glob
 import datetime
 
+MODEL_ALIAS_MAP = {
+    "gpt-5.1-codex": "openai/gpt-5.1-codex",
+    "claude-3-5-haiku-20241022": "anthropic/claude-3-5-haiku-20241022",
+    "anthropic/claude-3-5-haiku": "anthropic/claude-3-5-haiku-20241022",
+    "claude-3-5-sonnet-4-20250514": "anthropic/claude-sonnet-4-20250514",
+    "claude-sonnet-4-20250514": "anthropic/claude-sonnet-4-20250514",
+}
+
 def load_model_prices():
     """Load model pricing information"""
     price_file = os.path.join(
@@ -19,6 +27,9 @@ def load_model_prices():
     except json.JSONDecodeError:
         print("Error: Invalid JSON in model prices configuration")
         return {}
+
+def normalize_model_name(name):
+    return MODEL_ALIAS_MAP.get(name, name)
 
 def parse_session_logs():
     """Parse OpenClaw session logs for token usage"""
@@ -45,6 +56,7 @@ def parse_session_logs():
                             usage = usage or entry['message'].get('usage')
                         
                         if model and usage:
+                            canonical_model = normalize_model_name(model)
                             input_tokens = usage.get('input', usage.get('input_tokens', 0))
                             output_tokens = usage.get('output', usage.get('output_tokens', 0))
                             cache_read = usage.get('cacheRead', 0)
@@ -54,24 +66,27 @@ def parse_session_logs():
                             input_tokens = input_tokens or 0
                             output_tokens = output_tokens or 0
                             
-                            if model not in token_usage:
-                                token_usage[model] = {
+                            if canonical_model not in token_usage:
+                                token_usage[canonical_model] = {
                                     'input_tokens': 0,
                                     'output_tokens': 0,
                                     'cache_read': 0,
                                     'cache_write': 0,
-                                    'total_cost': 0.0
+                                    'total_cost': 0.0,
+                                    'aliases': set()
                                 }
                             
-                            token_usage[model]['input_tokens'] += input_tokens
-                            token_usage[model]['output_tokens'] += output_tokens
-                            token_usage[model]['cache_read'] += cache_read
-                            token_usage[model]['cache_write'] += cache_write
+                            token_usage[canonical_model]['aliases'].add(model)
+                            token_usage[canonical_model]['input_tokens'] += input_tokens
+                            token_usage[canonical_model]['output_tokens'] += output_tokens
+                            token_usage[canonical_model]['cache_read'] += cache_read
+                            token_usage[canonical_model]['cache_write'] += cache_write
                             
-                            if model in model_prices:
-                                input_cost = (input_tokens / 1000) * model_prices[model]['input_price_per_1k_tokens']
-                                output_cost = (output_tokens / 1000) * model_prices[model]['output_price_per_1k_tokens']
-                                token_usage[model]['total_cost'] += input_cost + output_cost
+                            if canonical_model in model_prices:
+                                prices = model_prices[canonical_model]
+                                input_cost = (input_tokens / 1000) * prices['input_price_per_1k_tokens']
+                                output_cost = (output_tokens / 1000) * prices['output_price_per_1k_tokens']
+                                token_usage[canonical_model]['total_cost'] += input_cost + output_cost
                     
                     except json.JSONDecodeError:
                         continue
@@ -86,7 +101,8 @@ def generate_report(token_usage):
     report += f"Generated: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n"
     
     for model, usage in token_usage.items():
-        report += f"Model: {model}\n"
+        alias_note = f" (aliases: {', '.join(sorted(usage.get('aliases', [])))} )" if usage.get('aliases') else ''
+        report += f"Model: {model}{alias_note}\n"
         report += f"Input Tokens: {usage['input_tokens']:,}\n"
         report += f"Output Tokens: {usage['output_tokens']:,}\n"
         report += f"Cache Reads: {usage['cache_read']:,} tokens\n"
