@@ -1,0 +1,14 @@
+{
+  "anthropic/claude-3-5-haiku-20241022": {
+    "input_price_per_1k_tokens": 0.25,
+    "output_price_per_1k_tokens": 1.25
+  },
+  "anthropic/claude-sonnet-4-20250514": {
+    "input_price_per_1k_tokens": 0.50,
+    "output_price_per_1k_tokens": 2.50
+  },
+  "openai/gpt-5.1-codex": {
+    "input_price_per_1k_tokens": 0.03,
+    "output_price_per_1k_tokens": 0.06
+  }
+}
