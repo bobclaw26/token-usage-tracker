@@ -205,6 +205,13 @@ def generate_dashboard(token_usage, prices):
     else:
         dashboard += f"✓ OK: {pct_used:.1f}% of daily limit used\n"
     
+    # $5 milestone tracking
+    alert_every = thresholds.get('alert_every_dollars', 5.0)
+    if alert_every > 0:
+        milestones_completed = int(total_cost / alert_every)
+        next_milestone = (milestones_completed + 1) * alert_every
+        dashboard += f"\n💰 Cost Milestones: {milestones_completed} × ${alert_every:.2f} (next: ${next_milestone:.2f})\n"
+    
     dashboard += f"\n  Daily: ${total_cost:.2f} / ${daily_limit:.2f}\n"
     dashboard += f"  Weekly: TBD / ${thresholds.get('weekly_cost_limit', 30.0):.2f}\n"
     dashboard += f"  Monthly: TBD / ${thresholds.get('monthly_cost_limit', 100.0):.2f}\n"
@@ -229,6 +236,25 @@ def generate_dashboard(token_usage, prices):
     
     return dashboard
 
+def load_cost_history():
+    """Load last tracked cost from history file"""
+    history_file = SCRIPT_DIR / 'references' / 'last_alert_cost.json'
+    try:
+        with open(history_file, 'r') as f:
+            return json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        return {'last_alert_cost': 0.0, 'timestamp': datetime.datetime.now().isoformat()}
+
+def save_cost_history(cost):
+    """Save current cost for next comparison"""
+    history_file = SCRIPT_DIR / 'references' / 'last_alert_cost.json'
+    data = {
+        'last_alert_cost': cost,
+        'timestamp': datetime.datetime.now().isoformat()
+    }
+    with open(history_file, 'w') as f:
+        json.dump(data, f, indent=2)
+
 def check_alerts(token_usage, prices, config):
     """Check if any alerts should be triggered"""
     costs, total_cost = calculate_costs(token_usage, prices)
@@ -236,12 +262,27 @@ def check_alerts(token_usage, prices, config):
     
     alerts = []
     
+    # Check for $5 increment alerts
+    alert_every_dollars = thresholds.get('alert_every_dollars', 5.0)
+    if alert_every_dollars > 0:
+        last_data = load_cost_history()
+        last_alert_cost = last_data.get('last_alert_cost', 0.0)
+        
+        # Calculate how many $5 increments have been crossed
+        last_increment = int(last_alert_cost / alert_every_dollars)
+        current_increment = int(total_cost / alert_every_dollars)
+        
+        if current_increment > last_increment:
+            threshold_crossed = (current_increment) * alert_every_dollars
+            alerts.append(f"💰 Milestone: ${threshold_crossed:.2f} spent (${total_cost:.2f} total today)")
+            save_cost_history(total_cost)
+    
     # Daily limit check
     daily_limit = thresholds.get('daily_cost_limit', 5.0)
     if total_cost >= daily_limit * 0.95:
-        alerts.append(f"⛔ CRITICAL: Daily cost limit at {(total_cost/daily_limit)*100:.1f}%")
+        alerts.append(f"⛔ CRITICAL: Daily cost limit at {(total_cost/daily_limit)*100:.1f}% (${total_cost:.2f} / ${daily_limit:.2f})")
     elif total_cost >= daily_limit * 0.75:
-        alerts.append(f"⚠ WARNING: Daily cost at {(total_cost/daily_limit)*100:.1f}% of limit")
+        alerts.append(f"⚠ WARNING: Daily cost at {(total_cost/daily_limit)*100:.1f}% of limit (${total_cost:.2f} / ${daily_limit:.2f})")
     
     # Model-specific limits
     model_limits = config.get('model_limits', {})

@@ -2,13 +2,16 @@
   "tracking": {
     "enabled": true,
     "auto_report": true,
-    "report_frequency": "daily"
+    "report_frequency": "daily",
+    "cache_optimization": true,
+    "context_pruning": true
   },
   "thresholds": {
     "daily_cost_limit": 5.00,
     "weekly_cost_limit": 30.00,
     "monthly_cost_limit": 100.00,
     "single_session_cost_limit": 2.00,
+    "alert_every_dollars": 5.00,
     "alert_level_warning": 0.75,
     "alert_level_critical": 0.95
   },
