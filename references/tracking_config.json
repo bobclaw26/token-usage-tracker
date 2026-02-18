@@ -1,0 +1,42 @@
+{
+  "tracking": {
+    "enabled": true,
+    "auto_report": true,
+    "report_frequency": "daily"
+  },
+  "thresholds": {
+    "daily_cost_limit": 5.00,
+    "weekly_cost_limit": 30.00,
+    "monthly_cost_limit": 100.00,
+    "single_session_cost_limit": 2.00,
+    "alert_level_warning": 0.75,
+    "alert_level_critical": 0.95
+  },
+  "model_limits": {
+    "anthropic/claude-haiku-4-5": {
+      "daily_tokens": 5000000,
+      "alert_on_exceed": true,
+      "description": "Fast model - use by default"
+    },
+    "openai/gpt-5.1-codex": {
+      "daily_tokens": 1000000,
+      "alert_on_exceed": true,
+      "description": "High-end model - use sparingly"
+    }
+  },
+  "alerts": {
+    "telegram_enabled": true,
+    "telegram_target": "7642182046",
+    "alert_on_cost_warning": true,
+    "alert_on_cost_critical": true,
+    "alert_on_model_exceed": true,
+    "alert_on_unusual_pattern": true
+  },
+  "cost_breakdown": {
+    "daily": true,
+    "weekly": true,
+    "monthly": true,
+    "by_model": true,
+    "by_session": false
+  }
+}

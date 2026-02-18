@@ -1,14 +1,22 @@
 {
+  "anthropic/claude-haiku-4-5": {
+    "input_price_per_1k_tokens": 0.00080,
+    "output_price_per_1k_tokens": 0.00240,
+    "description": "Fast, efficient model for general tasks, coding, thinking (PRIMARY)"
+  },
   "anthropic/claude-3-5-haiku-20241022": {
     "input_price_per_1k_tokens": 0.000793,
-    "output_price_per_1k_tokens": 0.000793
-  },
-  "anthropic/claude-sonnet-4-20250514": {
-    "input_price_per_1k_tokens": 0.50,
-    "output_price_per_1k_tokens": 2.50
+    "output_price_per_1k_tokens": 0.000793,
+    "description": "Legacy Haiku version"
   },
   "openai/gpt-5.1-codex": {
-    "input_price_per_1k_tokens": 0.000622,
-    "output_price_per_1k_tokens": 0.000622
+    "input_price_per_1k_tokens": 0.00050,
+    "output_price_per_1k_tokens": 0.00150,
+    "description": "High-level processing, complex reasoning (FALLBACK)"
+  },
+  "anthropic/claude-sonnet-4-20250514": {
+    "input_price_per_1k_tokens": 0.00300,
+    "output_price_per_1k_tokens": 0.01500,
+    "description": "Advanced model (avoid unless necessary)"
   }
 }
